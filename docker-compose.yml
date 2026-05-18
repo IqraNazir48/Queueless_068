@@ -2,22 +2,48 @@ version: '3.8'
 
 services:
 
-  app:
-    build: .
+  mongo:
+    image: mongo:6
+    container_name: queueless-mongo
+    restart: always
+    networks:
+      - queueless-network
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: queueless-backend
+    restart: always
+    networks:
+      - queueless-network
     ports:
       - "5000:5000"
-    environment:
-      - MONGO_URI=mongodb://mongo:27017/queueless
-      - PORT=5000
+    env_file:
+      - .env
     depends_on:
       - mongo
 
-  mongo:
-    image: mongo:6
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: queueless-frontend
+    restart: always
+    networks:
+      - queueless-network
     ports:
-      - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
+      - "80:80"
+    depends_on:
+      - backend
+
+networks:
+  queueless-network:
+    driver: bridge
 
 volumes:
   mongo-data:
